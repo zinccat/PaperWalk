@@ -10,6 +10,7 @@
   "dependencies": {
     "core-js": "^3.8.3",
     "neo4j-driver": "^5.16.0",
+    "sigma": "^3.0.0-beta.4",
     "vue": "^3.2.13"
   },
   "devDependencies": {
