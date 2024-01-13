@@ -1,7 +1,7 @@
 <template>
-    <h1>Papers</h1>
     <div id="neoVisGraph" class="neo-vis-container"></div>
 </template>
+
 
 <script>
 import NeoVis from 'neovis.js';
@@ -19,7 +19,7 @@ export default {
             }
             else
                 size = node.properties.citationCount + 1;
-            console.log(size/2);
+            console.log(size / 2);
             return node.properties.citationCount ** 2 / 2;
         },
         getColor(node) {
@@ -33,10 +33,30 @@ export default {
                 return "red";
             }
         },
-        getTitles(node) {
-           return node.properties.title === undefined ? "" : node.properties.title.split(" ")[0]
+        getOpacity(node) {
+            // use log scale to make the opacity more even
+            return Math.log(node.properties.citationCount + 2) / 5;
         },
-        initializeNeoVis() {
+        getTitles(node) {
+            //    return node.properties.title === undefined ? "" : node.properties.title.split(" ")[0]
+            let title = node.properties.firstAuthor === undefined ? "" : node.properties.firstAuthor.split(" ").slice(-1)[0]
+            title += ", "
+            title += node.properties.year === undefined ? "" : " " + node.properties.year
+
+            return title
+        },
+        applyFilter(minCitationCount) {
+            this.initializeNeoVis(minCitationCount);
+        },
+        initializeNeoVis(minCitationCount=0) {
+            let initialCypher;
+            if (minCitationCount === 0) { // No filter
+                initialCypher = 'MATCH (p1:Paper)-[r:CITES]->(p2:Paper) RETURN p1,r,p2 LIMIT 50';
+            } else if (minCitationCount === -1) { // 100+ Citations
+                initialCypher = 'MATCH (p1:Paper)-[r:CITES]->(p2:Paper) WHERE p1.citationCount >= 100 RETURN p1,r,p2 LIMIT 50';
+            } else { // Specific range
+                initialCypher = `MATCH (p1:Paper)-[r:CITES]->(p2:Paper) WHERE p1.citationCount >= ${minCitationCount} AND p1.citationCount < ${minCitationCount * 10} RETURN p1,r,p2 LIMIT 50`;
+            }
             const config = {
                 containerId: "neoVisGraph",
                 neo4j: {
@@ -46,29 +66,27 @@ export default {
                 },
                 labels: {
                     "Paper": {
-                        // first word in title
-                        // "label": this.randomSize,
-                        // "community": "paperId",
-                        // "group": "paperId",
-                        // "size": (node) => this.randomSize(node),
-                        // "value": "citationCount",
                         [NeoVis.NEOVIS_ADVANCED_CONFIG]: {
-                                function:{
-                                    // value: (node) => this.randomSize(node),
-                                    title: (node) => NeoVis.objectToTitleString(node, [
+                            function: {
+                                // value: (node) => this.randomSize(node),
+                                title: (node) => NeoVis.objectToTitleString(node, [
                                     "title",
-                                    // "year",
+                                    "year",
                                     "citationCount",
-                                    "paperId"
+                                    "paperId",
+                                    "firstAuthor",
+                                    "lastAuthor",
                                 ]),
-                                    color: this.getColor,
-                                    label: this.getTitles,
-                                    value: this.randomSize,
-                                    // static: {
-                                    //     value: 1.0
-                                    // }
-                                }
+                                
+                                label: this.getTitles,
+                                // value: this.randomSize,
+                                opacity: this.getOpacity,
+                                // color: this.getColor,
                             },
+                            static: {
+                                    mass: 5.0
+                                }
+                        },
                     },
                 },
                 relationships: {
@@ -84,8 +102,8 @@ export default {
                         }
                     }
                 },
-                initialCypher: 'MATCH (p1:Paper)-[r:CITES]->(p2:Paper) RETURN p1,r,p2 LIMIT 20',
-                
+                initialCypher: initialCypher,
+
             };
 
             const viz = new NeoVis(config);
@@ -97,10 +115,10 @@ export default {
 
 <style>
 .neo-vis-container {
-    height: 100%;
+    height: calc(100% - 100px); /* Adjust height as per your layout */
     width: 100%;
     position: absolute;
-    top: 0;
+    top: 100px; /* Adjust top as per your button's height */
     left: 0;
 }
 </style>
