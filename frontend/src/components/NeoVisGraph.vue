@@ -1,6 +1,24 @@
 <template>
+    <h1 class="text-3xl text-center font-bold mb-4">PaperWalk</h1>
+    <div class="flex justify-center pt-4">
+        <div class="mb-4">
+            <button @click="applyFilter(10)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
+                More than 10 Citations
+            </button>
+            <button @click="applyFilter(100)" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded mr-2">
+                More than 100 Citations
+            </button>
+            <button @click="applyFilter(1000)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2">
+                More than 1000 Citations
+            </button>
+            <button @click="applyFilter(0)" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                Clear Filter
+            </button>
+        </div>
+    </div>
     <div id="neoVisGraph" class="neo-vis-container"></div>
 </template>
+
 
 
 <script>
@@ -52,10 +70,8 @@ export default {
             let initialCypher;
             if (minCitationCount === 0) { // No filter
                 initialCypher = 'MATCH (p1:Paper)-[r:CITES]->(p2:Paper) RETURN p1,r,p2 LIMIT 50';
-            } else if (minCitationCount === -1) { // 100+ Citations
-                initialCypher = 'MATCH (p1:Paper)-[r:CITES]->(p2:Paper) WHERE p1.citationCount >= 100 RETURN p1,r,p2 LIMIT 50';
             } else { // Specific range
-                initialCypher = `MATCH (p1:Paper)-[r:CITES]->(p2:Paper) WHERE p1.citationCount >= ${minCitationCount} AND p1.citationCount < ${minCitationCount * 10} RETURN p1,r,p2 LIMIT 50`;
+                initialCypher = `MATCH (p1:Paper)-[r:CITES]->(p2:Paper) WHERE p1.citationCount >= ${minCitationCount} RETURN p1,r,p2 LIMIT 50`;
             }
             const config = {
                 containerId: "neoVisGraph",
@@ -115,10 +131,10 @@ export default {
 
 <style>
 .neo-vis-container {
-    height: calc(100% - 100px); /* Adjust height as per your layout */
+    height: calc(100% - 180px); /* Adjust based on actual button container height */
     width: 100%;
     position: absolute;
-    top: 100px; /* Adjust top as per your button's height */
+    top: 180px; /* Adjust this value as needed */
     left: 0;
 }
 </style>
