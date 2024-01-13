@@ -58,7 +58,7 @@ def insert_paper_data(conn, paper_id, paper_data):
             'citingPaperId': citing_paper['citingPaper']['paperId'],
             'title': citing_paper['citingPaper']['title'],
             'abstract': citing_paper['citingPaper']['abstract'],
-            'citationCount': citing_paper['citingPaper']['citationCount']
+            'citationCount': int(citing_paper['citingPaper']['citationCount']) if citing_paper['citingPaper']['citationCount'] else 0
         }
         conn.query(query, parameters)
 
@@ -66,6 +66,8 @@ def insert_paper_data(conn, paper_id, paper_data):
 if __name__ == "__main__":
     load_dotenv()
     conn = Neo4jConnection(uri=os.getenv("NEO4J_URI"), user=os.getenv("NEO4J_USER"), pwd=os.getenv("NEO4J_PWD"))
+    conn.clean()
+
     semantic_scholar_api = SemanticScholarAPI()
 
     # Replace with the actual paper ID
@@ -83,7 +85,5 @@ if __name__ == "__main__":
     result = conn.query(query)
     for record in result:
         print(record)
-
-    # conn.clean()
 
     conn.close()

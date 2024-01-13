@@ -1,15 +1,16 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="app">
+    <NeoVisGraph />
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import NeoVisGraph from './components/NeoVisGraph.vue';
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    NeoVisGraph
   }
 }
 </script>
