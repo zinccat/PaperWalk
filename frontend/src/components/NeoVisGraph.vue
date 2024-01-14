@@ -1,31 +1,45 @@
 <template>
-    <h1 class="text-3xl text-center font-bold mb-4">PaperWalk</h1>
-    <div class="flex justify-center pt-4">
-        <div class="mb-4">
-            <button @click="applyFilter(10)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
-                More than 10 Citations
-            </button>
-            <button @click="applyFilter(100)" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded mr-2">
-                More than 100 Citations
-            </button>
-            <button @click="applyFilter(1000)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2">
-                More than 1000 Citations
-            </button>
-            <button @click="applyFilter(0)" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                Clear Filter
-            </button>
+    <h1 class="text-3xl text-center font-bold mb-4 mt-4">PaperWalk</h1>
+    <div class="flex">
+        <!-- Graph Container -->
+        <div class="flex-grow">
+            <div class="flex justify-center pt-4">
+                <button @click="applyFilter(10)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
+                        More than 10 Citations
+                    </button>
+                    <button @click="applyFilter(100)" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded mr-2">
+                        More than 100 Citations
+                    </button>
+                    <button @click="applyFilter(1000)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2">
+                        More than 1000 Citations
+                    </button>
+                    <button @click="applyFilter(0)" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                        Clear Filter
+                    </button>
+            </div>
+            <div id="neoVisGraph" class="neo-vis-container"></div>
         </div>
+        <!-- Sidebar for Paper Information -->
+        <sidebar :paper="selectedPaper" class="w-1/3"></sidebar>
     </div>
-    <div id="neoVisGraph" class="neo-vis-container"></div>
 </template>
 
 
 
 <script>
+import sidebar from './SideBar.vue';
 import NeoVis from 'neovis.js';
 
 export default {
     name: 'NeoVisGraph',
+    components: {
+        sidebar
+    },
+    data() {
+        return {
+            selectedPaper: null, // Holds the selected paper's information
+        };
+    },
     mounted() {
         this.initializeNeoVis();
     },
@@ -53,7 +67,7 @@ export default {
         },
         getOpacity(node) {
             // use log scale to make the opacity more even
-            return Math.log(node.properties.citationCount + 2) / 5;
+            return Math.log(node.properties.citationCount + 2) / 10;
         },
         getTitles(node) {
             //    return node.properties.title === undefined ? "" : node.properties.title.split(" ")[0]
@@ -89,9 +103,9 @@ export default {
                                     "title",
                                     "year",
                                     "citationCount",
-                                    "paperId",
+                                    // "paperId",
                                     "firstAuthor",
-                                    "lastAuthor",
+                                    // "lastAuthor",
                                 ]),
                                 
                                 label: this.getTitles,
@@ -124,6 +138,12 @@ export default {
 
             const viz = new NeoVis(config);
             viz.render();
+
+            viz.registerOnEvent('clickNode', (e) => {
+            // e: { nodeId: number; node: Node }
+            console.info(e.node.raw.properties);
+            this.selectedPaper = e.node.raw.properties;
+            });
         }
     }
 };
@@ -132,7 +152,7 @@ export default {
 <style>
 .neo-vis-container {
     height: calc(100% - 180px); /* Adjust based on actual button container height */
-    width: 100%;
+    width: 60%;
     position: absolute;
     top: 180px; /* Adjust this value as needed */
     left: 0;
