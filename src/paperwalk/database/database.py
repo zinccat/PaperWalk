@@ -52,7 +52,7 @@ def insert_paper_data(conn, paper_id, paper_data):
         p.firstAuthorId = $firstAuthorId, p.lastAuthor = $lastAuthor, \
         p.lastAuthorId = $lastAuthorId, p.abstract = $abstract, \
         p.citationCount = $citationCount, p.referenceCount = $referenceCount, \
-        p.externalIds = $externalIds, p.year = $year
+        p.ArXiv = $ArXiv, p.year = $year
     '''
     parameters = {
         'paperId': paper_id,
@@ -64,7 +64,7 @@ def insert_paper_data(conn, paper_id, paper_data):
         'abstract': paper_data['abstract'],
         'citationCount': int(paper_data['citationCount']) if paper_data['citationCount'] else 0,
         'referenceCount': int(paper_data['referenceCount']) if paper_data['referenceCount'] else 0,
-        'externalIds': paper_data['externalIds']['Arxiv'] if 'Arxiv' in paper_data['externalIds'] else None,
+        'ArXiv': paper_data['externalIds']['ArXiv'] if 'ArXiv' in paper_data['externalIds'] else None,
         'year': paper_data['year']
     }
     conn.query(query, parameters)
@@ -78,7 +78,7 @@ def insert_citation_data(conn, paper_id, citation_data):
             p2.firstAuthorId = $firstAuthorId, p2.lastAuthor = $lastAuthor, \
             p2.lastAuthorId = $lastAuthorId, p2.abstract = $abstract, \
             p2.citationCount = $citationCount, p2.referenceCount = $referenceCount, \
-            p2.externalIds = $externalIds, p2.year = $year
+            p2.ArXiv = $ArXiv, p2.year = $year
         MERGE (p2)-[:CITES]->(p1)
         '''
         parameters = {
@@ -92,7 +92,7 @@ def insert_citation_data(conn, paper_id, citation_data):
             'abstract': citing_paper['citingPaper']['abstract'],
             'citationCount': int(citing_paper['citingPaper']['citationCount']) if citing_paper['citingPaper']['citationCount'] else 0,
             'referenceCount': int(citing_paper['citingPaper']['referenceCount']) if citing_paper['citingPaper']['referenceCount'] else 0,
-            'externalIds': citing_paper['citingPaper']['externalIds']['Arxiv'] if 'Arxiv' in citing_paper['citingPaper']['externalIds'] else None,
+            'ArXiv': citing_paper['citingPaper']['externalIds']['ArXiv'] if 'ArXiv' in citing_paper['citingPaper']['externalIds'] else None,
             'year': citing_paper['citingPaper']['year']
         }
         conn.query(query, parameters)
