@@ -52,7 +52,7 @@ export default {
             }
             else
                 size = node.properties.citationCount + 1;
-            console.log(size / 2);
+            console.log(size);
             return node.properties.citationCount ** 2 / 2;
         },
         getColor(node) {
@@ -68,7 +68,7 @@ export default {
         },
         getOpacity(node) {
             // use log scale to make the opacity more even
-            return Math.log(node.properties.citationCount + 2) / 10;
+            return Math.log(node.properties.citationCount + 2) / 13;
         },
         getTitles(node) {
             //    return node.properties.title === undefined ? "" : node.properties.title.split(" ")[0]
@@ -94,7 +94,7 @@ export default {
                 MATCH (p1:Paper) 
                 WHERE p1.citationCount >= ${minCitationCount} 
                 RETURN p1 AS paper1, NULL AS relationship, NULL AS paper2 
-                LIMIT 100
+                LIMIT 300
 
                 UNION
 
@@ -102,7 +102,7 @@ export default {
                 MATCH (p1:Paper)-[r:CITES]->(p2:Paper) 
                 WHERE p1.citationCount >= ${minCitationCount} AND p2.citationCount >= ${minCitationCount} 
                 RETURN p1 AS paper1, r AS relationship, p2 AS paper2 
-                LIMIT 100
+                LIMIT 300
                 `;
             const config = {
                 containerId: "neoVisGraph",
@@ -166,7 +166,6 @@ export default {
 
             viz.registerOnEvent('clickNode', (e) => {
                 // e: { nodeId: number; node: Node }
-                console.info(e.node.raw.properties);
                 this.selectedPaper = e.node.raw.properties;
             });
         }
