@@ -1,22 +1,23 @@
 <template>
     <h1 class="text-3xl text-center font-bold mb-4 mt-4">PaperWalk</h1>
+    <div class="flex justify-center pt-4">
+        <button @click="applyFilter(10)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
+            More than 10 Citations
+        </button>
+        <button @click="applyFilter(100)"
+            class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded mr-2">
+            More than 100 Citations
+        </button>
+        <button @click="applyFilter(1000)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2">
+            More than 1000 Citations
+        </button>
+        <button @click="applyFilter(0)" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+            Clear Filter
+        </button>
+    </div>
     <div class="flex">
         <!-- Graph Container -->
         <div class="flex-grow">
-            <div class="flex justify-center pt-4">
-                <button @click="applyFilter(10)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
-                        More than 10 Citations
-                    </button>
-                    <button @click="applyFilter(100)" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded mr-2">
-                        More than 100 Citations
-                    </button>
-                    <button @click="applyFilter(1000)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2">
-                        More than 1000 Citations
-                    </button>
-                    <button @click="applyFilter(0)" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        Clear Filter
-                    </button>
-            </div>
             <div id="neoVisGraph" class="neo-vis-container"></div>
         </div>
         <!-- Sidebar for Paper Information -->
@@ -82,7 +83,7 @@ export default {
         applyFilter(minCitationCount) {
             this.initializeNeoVis(minCitationCount);
         },
-        initializeNeoVis(minCitationCount=0) {
+        initializeNeoVis(minCitationCount = 0) {
             let initialCypher;
             // if (minCitationCount === 0) { // No filter
             //     initialCypher = 'MATCH (p1:Paper)-[r:CITES]->(p2:Paper) RETURN p1,r,p2 LIMIT 20';
@@ -123,15 +124,15 @@ export default {
                                     "firstAuthor",
                                     // "lastAuthor",
                                 ]),
-                                
+
                                 label: this.getTitles,
                                 // value: this.randomSize,
                                 opacity: this.getOpacity,
                                 // color: this.getColor,
                             },
                             static: {
-                                    mass: 5.0
-                                }
+                                mass: 5.0
+                            }
                         },
                     },
                 },
@@ -145,8 +146,16 @@ export default {
                             // function: {
                             //     "label": (rel) => rel.type,
                             // }
-                        }
-                    }
+                            static: {
+                                arrows: {
+                                    to: {
+                                        enabled: true,
+                                    },
+                                },
+                            }
+                        },
+                    },
+
                 },
                 initialCypher: initialCypher,
 
@@ -156,9 +165,9 @@ export default {
             viz.render();
 
             viz.registerOnEvent('clickNode', (e) => {
-            // e: { nodeId: number; node: Node }
-            console.info(e.node.raw.properties);
-            this.selectedPaper = e.node.raw.properties;
+                // e: { nodeId: number; node: Node }
+                console.info(e.node.raw.properties);
+                this.selectedPaper = e.node.raw.properties;
             });
         }
     }
@@ -167,10 +176,11 @@ export default {
 
 <style>
 .neo-vis-container {
-    height: calc(100% - 180px); /* Adjust based on actual button container height */
-    width: 100%;
+    height: calc(100% - 180px);
+    /* Adjust based on actual button container height */
+    width: 75%;
     position: absolute;
-    top: 180px; /* Adjust this value as needed */
+    top: 180px;
+    /* Adjust this value as needed */
     left: 0;
-}
-</style>
+}</style>

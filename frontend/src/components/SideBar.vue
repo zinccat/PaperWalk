@@ -5,8 +5,9 @@
       <p v-if="paper.ArXiv"><strong>ArXiv Link:</strong> <a :href="'https://arxiv.org/abs/' + paper.ArXiv" target="_blank" class="text-blue-500 hover:text-blue-800"> {{ paper.ArXiv }} </a></p>
       <p><strong>First Author:</strong> {{ paper.firstAuthor }}</p>
       <p><strong>Last Author:</strong> {{ paper.lastAuthor }}</p>
-      <p><strong>Year:</strong> {{ paper.year }}</p>
-      <p><strong>Abstract:</strong> {{ paper.abstract }}</p>
+      <p v-if="paper.year"><strong>Year:</strong> {{ paper.year }}</p>
+      <p v-if="paper.citationCount"><strong>Citation Count:</strong> {{ paper.citationCount }}</p>
+      <p v-if="paper.abstract"><strong>Abstract:</strong> {{ paper.abstract }}</p>
     </div>
   </template>
   
