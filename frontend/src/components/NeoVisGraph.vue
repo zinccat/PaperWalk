@@ -20,7 +20,7 @@
             <div id="neoVisGraph" class="neo-vis-container"></div>
         </div>
         <!-- Sidebar for Paper Information -->
-        <sidebar :paper="selectedPaper" class="w-1/3"></sidebar>
+        <sidebar :paper="selectedPaper"></sidebar>
     </div>
 </template>
 
@@ -72,8 +72,10 @@ export default {
         getTitles(node) {
             //    return node.properties.title === undefined ? "" : node.properties.title.split(" ")[0]
             let title = node.properties.firstAuthor === undefined ? "" : node.properties.firstAuthor.split(" ").slice(-1)[0]
-            title += ", "
-            title += node.properties.year === undefined ? "" : " " + node.properties.year
+            if (node.properties.year === undefined) {
+                return title
+            }
+            title += " (" + node.properties.year + ")"
 
             return title
         },
@@ -82,11 +84,25 @@ export default {
         },
         initializeNeoVis(minCitationCount=0) {
             let initialCypher;
-            if (minCitationCount === 0) { // No filter
-                initialCypher = 'MATCH (p1:Paper)-[r:CITES]->(p2:Paper) RETURN p1,r,p2 LIMIT 50';
-            } else { // Specific range
-                initialCypher = `MATCH (p1:Paper)-[r:CITES]->(p2:Paper) WHERE p1.citationCount >= ${minCitationCount} RETURN p1,r,p2 LIMIT 50`;
-            }
+            // if (minCitationCount === 0) { // No filter
+            //     initialCypher = 'MATCH (p1:Paper)-[r:CITES]->(p2:Paper) RETURN p1,r,p2 LIMIT 20';
+            // } else { // Specific range
+            //     initialCypher = `MATCH (p1:Paper)-[r:CITES]->(p2:Paper) WHERE p1.citationCount >= ${minCitationCount} OR p2.citationCount >= ${minCitationCount} RETURN p1,r,p2 LIMIT 20`;
+            // }
+            initialCypher = `
+                MATCH (p1:Paper) 
+                WHERE p1.citationCount >= ${minCitationCount} 
+                RETURN p1 AS paper1, NULL AS relationship, NULL AS paper2 
+                LIMIT 100
+
+                UNION
+
+                // Query to return edges between papers where either paper meets the citation count condition
+                MATCH (p1:Paper)-[r:CITES]->(p2:Paper) 
+                WHERE p1.citationCount >= ${minCitationCount} AND p2.citationCount >= ${minCitationCount} 
+                RETURN p1 AS paper1, r AS relationship, p2 AS paper2 
+                LIMIT 100
+                `;
             const config = {
                 containerId: "neoVisGraph",
                 neo4j: {
@@ -152,7 +168,7 @@ export default {
 <style>
 .neo-vis-container {
     height: calc(100% - 180px); /* Adjust based on actual button container height */
-    width: 60%;
+    width: 100%;
     position: absolute;
     top: 180px; /* Adjust this value as needed */
     left: 0;

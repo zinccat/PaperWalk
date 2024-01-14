@@ -57,10 +57,10 @@ def insert_paper_data(conn, paper_id, paper_data):
     parameters = {
         'paperId': paper_id,
         'title': paper_data['title'],
-        'firstAuthor': paper_data['authors'][0]['name'],
-        'firstAuthorId': paper_data['authors'][0]['authorId'],
-        'lastAuthor': paper_data['authors'][-1]['name'],
-        'lastAuthorId': paper_data['authors'][-1]['authorId'],
+        'firstAuthor': paper_data['authors'][0]['name'] if len(paper_data['authors']) > 0 else None,
+        'firstAuthorId': paper_data['authors'][0]['authorId'] if len(paper_data['authors']) > 0 else None,
+        'lastAuthor': paper_data['authors'][-1]['name'] if len(paper_data['authors']) > 0 else None,
+        'lastAuthorId': paper_data['authors'][-1]['authorId'] if len(paper_data['authors']) > 0 else None,
         'abstract': paper_data['abstract'],
         'citationCount': int(paper_data['citationCount']) if paper_data['citationCount'] else 0,
         'referenceCount': int(paper_data['referenceCount']) if paper_data['referenceCount'] else 0,
@@ -85,10 +85,10 @@ def insert_citation_data(conn, paper_id, citation_data):
             'paperId': paper_id,
             'citingPaperId': citing_paper['citingPaper']['paperId'],
             'title': citing_paper['citingPaper']['title'],
-            'firstAuthor': citing_paper['citingPaper']['authors'][0]['name'],
-            'firstAuthorId': citing_paper['citingPaper']['authors'][0]['authorId'],
-            'lastAuthor': citing_paper['citingPaper']['authors'][-1]['name'],
-            'lastAuthorId': citing_paper['citingPaper']['authors'][-1]['authorId'],
+            'firstAuthor': citing_paper['citingPaper']['authors'][0]['name'] if len(citing_paper['citingPaper']['authors']) > 0 else None,
+            'firstAuthorId': citing_paper['citingPaper']['authors'][0]['authorId'] if len(citing_paper['citingPaper']['authors']) > 0 else None,
+            'lastAuthor': citing_paper['citingPaper']['authors'][-1]['name'] if len(citing_paper['citingPaper']['authors']) > 0 else None,
+            'lastAuthorId': citing_paper['citingPaper']['authors'][-1]['authorId'] if len(citing_paper['citingPaper']['authors']) > 0 else None,
             'abstract': citing_paper['citingPaper']['abstract'],
             'citationCount': int(citing_paper['citingPaper']['citationCount']) if citing_paper['citingPaper']['citationCount'] else 0,
             'referenceCount': int(citing_paper['citingPaper']['referenceCount']) if citing_paper['citingPaper']['referenceCount'] else 0,
@@ -97,6 +97,35 @@ def insert_citation_data(conn, paper_id, citation_data):
         }
         conn.query(query, parameters)
 
+def insert_reference_data(conn, paper_id, reference_data):
+    for reference_paper in reference_data['data']:
+        query = '''
+        MERGE (p1:Paper {paperId: $paperId})
+        MERGE (p2:Paper {paperId: $referencePaperId})
+        ON CREATE SET p2.title = $title, p2.firstAuthor = $firstAuthor, \
+            p2.firstAuthorId = $firstAuthorId, p2.lastAuthor = $lastAuthor, \
+            p2.lastAuthorId = $lastAuthorId, p2.abstract = $abstract, \
+            p2.citationCount = $citationCount, p2.referenceCount = $referenceCount, \
+            p2.ArXiv = $ArXiv, p2.year = $year
+        MERGE (p1)-[:CITES]->(p2)
+        '''
+        print(reference_paper['citedPaper'])
+        parameters = {
+            'paperId': paper_id,
+            'referencePaperId': reference_paper['citedPaper']['paperId'],
+            'title': reference_paper['citedPaper']['title'],
+            'firstAuthor': reference_paper['citedPaper']['authors'][0]['name'] if len(reference_paper['citedPaper']['authors']) > 0 else None,
+            'firstAuthorId': reference_paper['citedPaper']['authors'][0]['authorId'] if len(reference_paper['citedPaper']['authors']) > 0 else None,
+            'lastAuthor': reference_paper['citedPaper']['authors'][-1]['name'] if len(reference_paper['citedPaper']['authors']) > 0 else None,
+            'lastAuthorId': reference_paper['citedPaper']['authors'][-1]['authorId'] if len(reference_paper['citedPaper']['authors']) > 0 else None,
+            'abstract': reference_paper['citedPaper']['abstract'],
+            'citationCount': int(reference_paper['citedPaper']['citationCount']) if reference_paper['citedPaper']['citationCount'] else 0,
+            'referenceCount': int(reference_paper['citedPaper']['referenceCount']) if reference_paper['citedPaper']['referenceCount'] else 0,
+            # externalIds is not always present
+            'ArXiv': reference_paper['citedPaper']['externalIds']['ArXiv'] if reference_paper['citedPaper']['externalIds'] is not None and 'ArXiv' in reference_paper['citedPaper']['externalIds'] else None,
+            'year': reference_paper['citedPaper']['year']
+        }
+        conn.query(query, parameters)
 
 if __name__ == "__main__":
     load_dotenv()
@@ -114,6 +143,16 @@ if __name__ == "__main__":
     citation_data = semantic_scholar_api.fetch_citations(paper_id)
     if citation_data:
         insert_citation_data(conn, paper_id, citation_data)
+
+    # for paper in citation_data['data'], search references
+    for citing_paper in citation_data['data']:
+        paper_id = citing_paper['citingPaper']['paperId']
+        paper_data = semantic_scholar_api.fetch_paper(paper_id)
+        if paper_data:
+            insert_paper_data(conn, paper_id, paper_data)
+        reference_data = semantic_scholar_api.fetch_references(paper_id)
+        if reference_data:
+            insert_reference_data(conn, paper_id, reference_data)
 
     # query
     query = '''
