@@ -132,7 +132,7 @@ if __name__ == "__main__":
     conn = Neo4jConnection(uri=os.getenv("NEO4J_URI"), user=os.getenv("NEO4J_USER"), pwd=os.getenv("NEO4J_PWD"))
     conn.clean()
 
-    semantic_scholar_api = SemanticScholarAPI()
+    semantic_scholar_api = SemanticScholarAPI(api_key=os.getenv("SEMANTIC_SCHOLAR_API_KEY"))
 
     # Replace with the actual paper ID
     paper_id = "649def34f8be52c8b66281af98ae884c09aef38b"
