@@ -58,25 +58,11 @@ class PaperDatabaseManager:
             print("Failed to clean the database:", e)
 
     def run_pagerank(self):
-        # Create a graph projection
-        # create_projection_query = """
-        # CALL gds.graph.project(
-        #     'papersGraph6',
-        #     'Paper',
-        #     'CITES'
-        # )
-        # """
-        # result = self.conn.execute_query(create_projection_query)
-        # print(result.result())
-        # exit()
         G_papers, projection = self.gds.graph.project(
             graph_name="papersGraph",
             relationship_spec="CITES",
             node_spec="Paper",
         )
-        # print(G_papers)
-        # print(projection)
-        # print(G_papers.node_count())
 
         # Run PageRank
         # results = self.gds.pageRank.stream(self.gds.graph.get("papersGraph"))
@@ -93,32 +79,6 @@ class PaperDatabaseManager:
             G=G_papers,
             writeProperty="articlerank",
         )
-
-        # pagerank_query = """
-        # CALL gds.pageRank.write('papersGraph', {
-        #     maxIterations: 20,
-        #     dampingFactor: 0.85,
-        #     writeProperty: 'pagerank'
-        # })
-        # """
-        # self.conn.execute_query(pagerank_query)
-
-        # # Drop the graph projection if needed
-        # drop_projection_query = "CALL gds.graph.drop('papersGraph')"
-        # self.conn.execute_query(drop_projection_query)
-
-        # self.logger.info("PageRank algorithm executed successfully.")
-
-        # Query the top 10 papers
-        # query = """
-        # MATCH (p:Paper)
-        # RETURN p.title, p.pagerank
-        # ORDER BY p.pagerank DESC
-        # LIMIT 10
-        # """
-        # result = self.conn.execute_query(query)
-        # for record in result:
-        #     print(record)
 
     def insert_paper(self, paper_id, paper_data):
         query = """
