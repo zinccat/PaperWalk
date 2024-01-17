@@ -16,7 +16,7 @@ class Neo4jConnection:
         self.__password = pwd
         self.__driver = None
         try:
-            self.__driver = GraphDatabase.driver(self.__uri, auth=(self.__user, self.__password))
+            self.__driver = GraphDatabase.driver(self.__uri, auth=(self.__user, self.__password), encrypted=False, connection_timeout=5)
             self.__driver.verify_connectivity()
         except Exception as e:
             print("Failed to create the driver:", e)
@@ -25,10 +25,12 @@ class Neo4jConnection:
         if self.__driver:
             self.__driver.close()
 
-    def execute_query(self, query, parameters=None, db=None):
-        # with self.__driver.session(database=db) as session:
-        #     return session.run(query, parameters)
-        return self.__driver.session(database=db).run(query, parameters)
+    def execute_query(self, query, parameters=None, db=None, protected=True):
+        if protected:
+            with self.__driver.session(database=db) as session:
+                return session.run(query, parameters)
+        else:
+            return self.__driver.session(database=db).run(query, parameters)
 
 class PaperDatabaseManager:
     def __init__(self, neo4j_connection, gds: GraphDataScience = None):
@@ -162,7 +164,7 @@ class PaperDatabaseManager:
                 p2.lastAuthorId = $lastAuthorId, p2.abstract = $abstract, \
                 p2.citationCount = $citationCount, p2.referenceCount = $referenceCount, \
                 p2.ArXiv = $ArXiv, p2.year = $year
-            MERGE (p1)-[:REFERENCES]->(p2)
+            MERGE (p1)-[:CITES]->(p2)
             '''
             key = 'citedPaper'
         
@@ -204,28 +206,27 @@ if __name__ == "__main__":
         paper_db.insert_paper(paper_id, paper_data)
 
     citation_data = semantic_scholar_api.fetch_citations(paper_id)
-    if citation_data:
+    if citation_data is not None:
         paper_db.insert_citation_or_reference(paper_id, citation_data, Relation.CITES)
-
-    # for paper in citation_data['data'], search references
-    # for citing_paper in citation_data['data']:
-    #     paper_id = citing_paper['citingPaper']['paperId']
-    #     paper_data = semantic_scholar_api.fetch_paper(paper_id)
-    #     if paper_data:
-    #         paper_db.insert_paper(paper_id, paper_data)
-    #     reference_data = semantic_scholar_api.fetch_references(paper_id)
-    #     if reference_data:
-    #         paper_db.insert_citation_or_reference(paper_id, reference_data, Relation.REFERENCES)
+        # for paper in citation_data['data'],
+        for citing_paper in citation_data['data']:
+            paper_id = citing_paper['citingPaper']['paperId']
+            paper_data = semantic_scholar_api.fetch_paper(paper_id)
+            if paper_data:
+                paper_db.insert_paper(paper_id, paper_data)
+            reference_data = semantic_scholar_api.fetch_references(paper_id)
+            if reference_data:
+                paper_db.insert_citation_or_reference(paper_id, reference_data, Relation.REFERENCES)
 
     paper_db.run_pagerank()
 
     # query
-    # query = '''
-    # MATCH (p:Paper)
-    # RETURN p.title, p.abstract, p.citationCount, p.citingPaperId
-    # '''
-    # result = conn.execute_query(query)
-    # for record in result:
-    #     print(record)
+    query = '''
+    MATCH (p:Paper)
+    RETURN p.title, p.abstract, p.citationCount, p.citingPaperId
+    '''
+    result = conn.execute_query(query, protected=False)
+    for record in result:
+        print(record)
 
     conn.close()
