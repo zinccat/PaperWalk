@@ -94,7 +94,7 @@ export default {
                 MATCH (p1:Paper) 
                 WHERE p1.citationCount >= ${minCitationCount} 
                 RETURN p1 AS paper1, NULL AS relationship, NULL AS paper2 
-                LIMIT 300
+                LIMIT 200
 
                 UNION
 
@@ -102,7 +102,7 @@ export default {
                 MATCH (p1:Paper)-[r:CITES]->(p2:Paper) 
                 WHERE p1.citationCount >= ${minCitationCount} AND p2.citationCount >= ${minCitationCount} 
                 RETURN p1 AS paper1, r AS relationship, p2 AS paper2 
-                LIMIT 300
+                LIMIT 200
                 `;
             const config = {
                 containerId: "neoVisGraph",
@@ -184,4 +184,5 @@ export default {
     top: 180px;
     /* Adjust this value as needed */
     left: 0;
-}</style>
+}
+</style>
