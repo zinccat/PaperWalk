@@ -89,38 +89,61 @@ class PaperDatabaseManager:
             p.citationCount = $citationCount, p.referenceCount = $referenceCount, \
             p.ArXiv = $ArXiv, p.year = $year
         """
-        parameters = {
-            "paperId": paper_id,
-            "title": paper_data["title"],
-            "firstAuthor": paper_data["authors"][0]["name"]
-            if len(paper_data["authors"]) > 0
-            else None,
-            "firstAuthorId": paper_data["authors"][0]["authorId"]
-            if len(paper_data["authors"]) > 0
-            else None,
-            "lastAuthor": paper_data["authors"][-1]["name"]
-            if len(paper_data["authors"]) > 0
-            else None,
-            "lastAuthorId": paper_data["authors"][-1]["authorId"]
-            if len(paper_data["authors"]) > 0
-            else None,
-            "abstract": paper_data["abstract"],
-            "citationCount": int(paper_data["citationCount"])
-            if paper_data["citationCount"]
-            else 0,
-            "referenceCount": int(paper_data["referenceCount"])
-            if paper_data["referenceCount"]
-            else 0,
-            "ArXiv": paper_data["externalIds"]["ArXiv"]
-            if "ArXiv" in paper_data["externalIds"]
-            else None,
-            "year": paper_data["year"],
+        authors = paper_data.get("authors", [])
+        paper_param = {
+            "paperId": paper_data["paperId"],
+            "title": paper_data.get("title"),
+            "firstAuthor": authors[0].get("name") if authors else None,
+            "firstAuthorId": authors[0].get("authorId") if authors else None,
+            "lastAuthor": authors[-1].get("name") if authors else None,
+            "lastAuthorId": authors[-1].get("authorId") if authors else None,
+            "abstract": paper_data.get("abstract"),
+            "citationCount": int(paper_data.get("citationCount", 0)),
+            "referenceCount": int(paper_data.get("referenceCount", 0)),
+            "ArXiv": paper_data.get("externalIds", {}).get("ArXiv"),
+            "year": paper_data.get("year"),
         }
         try:
-            self.conn.execute_query(query, parameters)
+            self.conn.execute_query(query, paper_param)
             self.logger.info(f"Inserted paper {paper_id}.")
         except Exception as e:
             self.logger.error(f"Error inserting paper {paper_id}: {e}")
+
+    def insert_papers_bulk(self, papers_data):
+        query = """
+        UNWIND $papers as paper
+        MERGE (p:Paper {paperId: paper.paperId})
+        ON CREATE SET p.title = paper.title, p.firstAuthor = paper.firstAuthor, 
+            p.firstAuthorId = paper.firstAuthorId, p.lastAuthor = paper.lastAuthor, 
+            p.lastAuthorId = paper.lastAuthorId, p.abstract = paper.abstract, 
+            p.citationCount = paper.citationCount, p.referenceCount = paper.referenceCount, 
+            p.ArXiv = paper.ArXiv, p.year = paper.year
+        """
+        papers_parameters = []
+        for paper_data in papers_data:
+            authors = paper_data.get("authors", [])
+            paper_param = {
+                "paperId": paper_data["paperId"],
+                "title": paper_data.get("title"),
+                "firstAuthor": authors[0].get("name") if authors else None,
+                "firstAuthorId": authors[0].get("authorId") if authors else None,
+                "lastAuthor": authors[-1].get("name") if authors else None,
+                "lastAuthorId": authors[-1].get("authorId") if authors else None,
+                "abstract": paper_data.get("abstract"),
+                "citationCount": int(paper_data.get("citationCount", 0)),
+                "referenceCount": int(paper_data.get("referenceCount", 0)),
+                "ArXiv": paper_data.get("externalIds", {}).get("ArXiv"),
+                "year": paper_data.get("year"),
+            }
+            papers_parameters.append(paper_param)
+
+        parameters = {"papers": papers_parameters}
+
+        try:
+            self.conn.execute_query(query, parameters)
+            self.logger.info(f"Bulk inserted {len(papers_parameters)} papers.")
+        except Exception as e:
+            self.logger.error(f"Error in bulk insertion: {e}")
 
     def insert_citation_or_reference(self, paper_id, paper_data, relation: Relation):
         if relation == Relation.CITES:
@@ -136,7 +159,6 @@ class PaperDatabaseManager:
             """
             key = "citingPaper"
         elif relation == Relation.REFERENCES:
-            # inverse of CITES
             query = """
             MERGE (p1:Paper {paperId: $paperId})
             MERGE (p2:Paper {paperId: $citingPaperId})
@@ -150,43 +172,85 @@ class PaperDatabaseManager:
             key = "citedPaper"
 
         for relation_paper in paper_data["data"]:
+            paper_info = relation_paper.get(key, {})
+            authors = paper_info.get("authors", [])
             parameters = {
                 "paperId": paper_id,
-                "citingPaperId": relation_paper[key]["paperId"],
-                "title": relation_paper[key]["title"],
-                "firstAuthor": relation_paper[key]["authors"][0]["name"]
-                if len(relation_paper[key]["authors"]) > 0
-                else None,
-                "firstAuthorId": relation_paper[key]["authors"][0]["authorId"]
-                if len(relation_paper[key]["authors"]) > 0
-                else None,
-                "lastAuthor": relation_paper[key]["authors"][-1]["name"]
-                if len(relation_paper[key]["authors"]) > 0
-                else None,
-                "lastAuthorId": relation_paper[key]["authors"][-1]["authorId"]
-                if len(relation_paper[key]["authors"]) > 0
-                else None,
-                "abstract": relation_paper[key]["abstract"],
-                "citationCount": int(relation_paper[key]["citationCount"])
-                if relation_paper[key]["citationCount"]
-                else 0,
-                "referenceCount": int(relation_paper[key]["referenceCount"])
-                if relation_paper[key]["referenceCount"]
-                else 0,
-                # externalIds is not always present
-                "ArXiv": relation_paper[key]["externalIds"]["ArXiv"]
-                if relation_paper[key]["externalIds"] is not None
-                and "ArXiv" in relation_paper[key]["externalIds"]
-                else None,
-                "year": relation_paper[key]["year"],
-            }
+                "citingPaperId": paper_info.get("paperId"),
+                "title": paper_info.get("title"),
+                "firstAuthor": authors[0].get("name") if authors else None,
+                "firstAuthorId": authors[0].get("authorId") if authors else None,
+                "lastAuthor": authors[-1].get("name") if authors else None,
+                "lastAuthorId": authors[-1].get("authorId") if authors else None,
+                "abstract": paper_info.get("abstract"),
+                "citationCount": int(paper_info.get("citationCount", 0)),
+                "referenceCount": int(paper_info.get("referenceCount", 0)),
+                "ArXiv": paper_info.get("externalIds", {}).get("ArXiv"),
+                "year": paper_info.get("year"),
+                }
             try:
                 self.conn.execute_query(query, parameters)
-                self.logger.info(f"Inserted paper {relation_paper[key]['paperId']}.")
+                self.logger.info(f"Inserted paper {paper_info.get('paperId')}.")
             except Exception as e:
-                self.logger.error(
-                    f"Error inserting paper {relation_paper[key]['paperId']}: {e}"
-                )
+                self.logger.error(f"Error inserting paper {paper_info.get('paperId')}: {e}")
+
+    def insert_citations_or_references_bulk(
+        self, paper_id, paper_data, relation: Relation
+    ):
+        if relation == Relation.CITES:
+            query = """
+            UNWIND $papers as paper
+            MERGE (p1:Paper {paperId: $paperId})
+            MERGE (p2:Paper {paperId: paper.citingPaperId})
+            ON CREATE SET p2.title = paper.title, p2.firstAuthor = paper.firstAuthor, 
+                p2.firstAuthorId = paper.firstAuthorId, p2.lastAuthor = paper.lastAuthor, 
+                p2.lastAuthorId = paper.lastAuthorId, p2.abstract = paper.abstract, 
+                p2.citationCount = paper.citationCount, p2.referenceCount = paper.referenceCount, 
+                p2.ArXiv = paper.ArXiv, p2.year = paper.year
+            MERGE (p2)-[:CITES]->(p1)
+            """
+            key = "citingPaper"
+        elif relation == Relation.REFERENCES:
+            query = """
+            UNWIND $papers as paper
+            MERGE (p1:Paper {paperId: $paperId})
+            MERGE (p2:Paper {paperId: paper.citingPaperId})
+            ON CREATE SET p2.title = paper.title, p2.firstAuthor = paper.firstAuthor, 
+                p2.firstAuthorId = paper.firstAuthorId, p2.lastAuthor = paper.lastAuthor, 
+                p2.lastAuthorId = paper.lastAuthorId, p2.abstract = paper.abstract, 
+                p2.citationCount = paper.citationCount, p2.referenceCount = paper.referenceCount, 
+                p2.ArXiv = paper.ArXiv, p2.year = paper.year
+            MERGE (p1)-[:CITES]->(p2)
+            """
+            key = "citedPaper"
+
+        papers_parameters = []
+        for relation_paper in paper_data["data"]:
+            paper_info = relation_paper.get(key, {})
+            authors = paper_info.get("authors", [])
+            parameters = {
+                "paperId": paper_id,
+                "citingPaperId": paper_info.get("paperId"),
+                "title": paper_info.get("title"),
+                "firstAuthor": authors[0].get("name") if authors else None,
+                "firstAuthorId": authors[0].get("authorId") if authors else None,
+                "lastAuthor": authors[-1].get("name") if authors else None,
+                "lastAuthorId": authors[-1].get("authorId") if authors else None,
+                "abstract": paper_info.get("abstract"),
+                "citationCount": int(paper_info.get("citationCount", 0)),
+                "referenceCount": int(paper_info.get("referenceCount", 0)),
+                "ArXiv": paper_info.get("externalIds", {}).get("ArXiv"),
+                "year": paper_info.get("year"),
+                }
+            papers_parameters.append(parameters)
+
+        parameters = {"papers": papers_parameters, "paperId": paper_id}
+
+        try:
+            self.conn.execute_query(query, parameters)
+            self.logger.info(f"Bulk inserted {len(papers_parameters)} papers.")
+        except Exception as e:
+            self.logger.error(f"Error in bulk insertion: {e}")
 
 
 if __name__ == "__main__":
@@ -217,7 +281,7 @@ if __name__ == "__main__":
 
     citation_data = semantic_scholar_api.fetch_citations(paper_id)
     for citation in citation_data:
-        paper_db.insert_citation_or_reference(paper_id, citation, Relation.CITES)
+        paper_db.insert_citations_or_references_bulk(paper_id, citation, Relation.CITES)
         # for paper in citation_data['data'],
         for citing_paper in citation["data"]:
             paper_id = citing_paper["citingPaper"]["paperId"]
@@ -226,7 +290,7 @@ if __name__ == "__main__":
                 paper_db.insert_paper(paper_id, paper_data)
             reference_data = semantic_scholar_api.fetch_references(paper_id)
             for reference in reference_data:
-                paper_db.insert_citation_or_reference(
+                paper_db.insert_citations_or_references_bulk(
                     paper_id, reference, Relation.REFERENCES
                 )
 
