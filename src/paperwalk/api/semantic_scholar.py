@@ -1,9 +1,5 @@
-import requests
-import backoff
 from logging import (
     getLogger,
-    StreamHandler,
-    Formatter,
     DEBUG,
     INFO,
     WARNING,
@@ -11,11 +7,16 @@ from logging import (
     CRITICAL,
 )
 
+import requests
+import backoff
+
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class SemanticScholarAPI:
+    """Semantic Scholar API wrapper"""
+
     def __init__(self, api_key=None):
         if api_key is not None:
             self.api_key = api_key
@@ -49,10 +50,12 @@ class SemanticScholarAPI:
             return None
 
     def fetch_paper(self, paper_id):
+        """Fetch a paper by its ID"""
         url = f"https://api.semanticscholar.org/graph/v1/paper/{paper_id}?fields={self.fields}&limit={self.limit}"
         return self._request(url)
 
     def fetch_citations(self, paper_id, fetch_all=False):
+        """Fetch citations of a paper"""
         if fetch_all:
             finished = False
             offset = 0
@@ -72,6 +75,7 @@ class SemanticScholarAPI:
             yield self._request(url)
 
     def fetch_references(self, paper_id, fetch_all=False):
+        """Fetch references of a paper"""
         if fetch_all:
             finished = False
             offset = 0
