@@ -2,3 +2,5 @@ neo4j
 requests
 python-dotenv
 networkx
+graphdatascience
+backoff
