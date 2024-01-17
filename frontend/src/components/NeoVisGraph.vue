@@ -122,6 +122,8 @@ export default {
                                     "citationCount",
                                     // "paperId",
                                     "firstAuthor",
+                                    "pagerank",
+                                    "articlerank",
                                     // "lastAuthor",
                                 ]),
 

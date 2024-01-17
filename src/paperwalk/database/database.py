@@ -1,4 +1,5 @@
 from neo4j import GraphDatabase
+from graphdatascience import GraphDataScience
 from paperwalk.api import SemanticScholarAPI
 import requests
 import logging
@@ -25,19 +26,90 @@ class Neo4jConnection:
             self.__driver.close()
 
     def execute_query(self, query, parameters=None, db=None):
-        with self.__driver.session(database=db) as session:
-            return session.run(query, parameters)
+        # with self.__driver.session(database=db) as session:
+        #     return session.run(query, parameters)
+        return self.__driver.session(database=db).run(query, parameters)
 
 class PaperDatabaseManager:
-    def __init__(self, neo4j_connection):
+    def __init__(self, neo4j_connection, gds: GraphDataScience = None):
         self.conn = neo4j_connection
+        if gds:
+            self.gds = gds
         self.logger = logging.getLogger(__name__)
 
     def clean_database(self):
         try:
             self.conn.execute_query("MATCH (n) DETACH DELETE n")
+            self.gds.graph.drop(self.gds.graph.get("papersGraph"))
+            # graphs = self.gds.graph.list()
+            # for graph in graphs:
+            #     self.gds.graph.drop(self.gds.graph.get(graph))
+            self.logger.info("Database cleaned successfully.")
         except Exception as e:
             print("Failed to clean the database:", e)
+    
+    def run_pagerank(self):
+        # Create a graph projection
+        # create_projection_query = """
+        # CALL gds.graph.project(
+        #     'papersGraph6',
+        #     'Paper',
+        #     'CITES'
+        # )
+        # """
+        # result = self.conn.execute_query(create_projection_query)
+        # print(result.result())
+        # exit()
+        G_papers, projection = self.gds.graph.project(
+            graph_name="papersGraph",
+            relationship_spec="CITES",
+            node_spec="Paper",
+        )
+        # print(G_papers)
+        # print(projection)
+        # print(G_papers.node_count())
+
+        # Run PageRank
+        # results = self.gds.pageRank.stream(self.gds.graph.get("papersGraph"))
+        # print(results)
+
+        results = self.gds.pageRank.write(
+            G=G_papers, #self.gds.graph.get("papersGraph"),
+            maxIterations=20,
+            dampingFactor=0.85,
+            writeProperty="pagerank",
+        )
+
+        results = self.gds.articleRank.write(
+            G=G_papers, 
+            writeProperty="articlerank",
+        )
+        
+        # pagerank_query = """
+        # CALL gds.pageRank.write('papersGraph', {
+        #     maxIterations: 20,
+        #     dampingFactor: 0.85,
+        #     writeProperty: 'pagerank'
+        # })
+        # """
+        # self.conn.execute_query(pagerank_query)
+
+        # # Drop the graph projection if needed
+        # drop_projection_query = "CALL gds.graph.drop('papersGraph')"
+        # self.conn.execute_query(drop_projection_query)
+
+        # self.logger.info("PageRank algorithm executed successfully.")
+
+        # Query the top 10 papers
+        # query = """
+        # MATCH (p:Paper)
+        # RETURN p.title, p.pagerank
+        # ORDER BY p.pagerank DESC
+        # LIMIT 10
+        # """
+        # result = self.conn.execute_query(query)
+        # for record in result:
+        #     print(record)
     
     def insert_paper(self, paper_id, paper_data):
         query = '''
@@ -119,7 +191,8 @@ class PaperDatabaseManager:
 if __name__ == "__main__":
     load_dotenv()
     conn = Neo4jConnection(uri=os.getenv("NEO4J_URI"), user=os.getenv("NEO4J_USER"), pwd=os.getenv("NEO4J_PWD"))
-    paper_db = PaperDatabaseManager(conn)
+    gds = GraphDataScience(os.getenv("NEO4J_URI"), auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PWD")), database="neo4j")
+    paper_db = PaperDatabaseManager(conn, gds)
     paper_db.clean_database()
 
     semantic_scholar_api = SemanticScholarAPI(api_key=os.getenv("SEMANTIC_SCHOLAR_API_KEY"))
@@ -135,14 +208,16 @@ if __name__ == "__main__":
         paper_db.insert_citation_or_reference(paper_id, citation_data, Relation.CITES)
 
     # for paper in citation_data['data'], search references
-    for citing_paper in citation_data['data']:
-        paper_id = citing_paper['citingPaper']['paperId']
-        paper_data = semantic_scholar_api.fetch_paper(paper_id)
-        if paper_data:
-            paper_db.insert_paper(paper_id, paper_data)
-        reference_data = semantic_scholar_api.fetch_references(paper_id)
-        if reference_data:
-            paper_db.insert_citation_or_reference(paper_id, reference_data, Relation.REFERENCES)
+    # for citing_paper in citation_data['data']:
+    #     paper_id = citing_paper['citingPaper']['paperId']
+    #     paper_data = semantic_scholar_api.fetch_paper(paper_id)
+    #     if paper_data:
+    #         paper_db.insert_paper(paper_id, paper_data)
+    #     reference_data = semantic_scholar_api.fetch_references(paper_id)
+    #     if reference_data:
+    #         paper_db.insert_citation_or_reference(paper_id, reference_data, Relation.REFERENCES)
+
+    paper_db.run_pagerank()
 
     # query
     # query = '''
