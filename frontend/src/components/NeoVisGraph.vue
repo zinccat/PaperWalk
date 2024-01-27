@@ -39,6 +39,7 @@ export default {
     data() {
         return {
             selectedPaper: null, // Holds the selected paper's information
+            selectedEdge: null, // Holds the selected edge's information
         };
     },
     mounted() {
@@ -94,7 +95,7 @@ export default {
                 MATCH (p1:Paper) 
                 WHERE p1.citationCount >= ${minCitationCount} 
                 RETURN p1 AS paper1, NULL AS relationship, NULL AS paper2 
-                LIMIT 200
+                LIMIT 100
 
                 UNION
 
@@ -102,7 +103,7 @@ export default {
                 MATCH (p1:Paper)-[r:CITES]->(p2:Paper) 
                 WHERE p1.citationCount >= ${minCitationCount} AND p2.citationCount >= ${minCitationCount} 
                 RETURN p1 AS paper1, r AS relationship, p2 AS paper2 
-                LIMIT 200
+                LIMIT 100
                 `;
             const config = {
                 containerId: "neoVisGraph",
@@ -133,27 +134,35 @@ export default {
                                 // color: this.getColor,
                             },
                             static: {
-                                mass: 5.0
+                                mass: 2.0
                             }
                         },
                     },
                 },
                 relationships: {
                     "CITES": {
-                        "thickness": "weight",
-                        "label": "weight",
+                        // "thickness": "weight",
+                        // "label": "weight",
                         // "thickness": "weight",
                         // "caption": true
                         [NeoVis.NEOVIS_ADVANCED_CONFIG]: {
-                            // function: {
-                            //     "label": (rel) => rel.type,
-                            // }
+                            function: {
+                                // "label": (rel) => rel.type,
+                                width: (rel) => {
+                                    const nodeFrom = rel.start;
+                                    const nodeTo = rel.end;
+                                    const nodeFromCitationCount = viz.nodes.get(nodeFrom).raw.properties.citationCount;
+                                    const nodeToCitationCount = viz.nodes.get(nodeTo).raw.properties.citationCount;
+                                    return Math.max(1, nodeFromCitationCount * nodeToCitationCount * 0.02);
+                                },
+                            },
                             static: {
                                 arrows: {
                                     to: {
                                         enabled: true,
                                     },
                                 },
+                                smooth: true,
                             }
                         },
                     },
@@ -169,6 +178,13 @@ export default {
             viz.registerOnEvent('clickNode', (e) => {
                 // e: { nodeId: number; node: Node }
                 this.selectedPaper = e.node.raw.properties;
+                console.log(this.selectedPaper);
+            });
+            // Assuming network is your Vis.js network instance
+            viz.registerOnEvent("clickEdge", (e) => {
+                this.selectedEdge = e.edge;
+                // console.log(this.selectedEdge);
+                // console.log(viz.nodes.get(e.edge.from));
             });
         }
     }
