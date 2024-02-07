@@ -116,6 +116,7 @@ class PaperDatabaseManager:
         }
         try:
             self.logger.info("Inserted paper %s.", paper_id)
+            self.conn.execute_query(query, paper_param)
         except Exception as e:
             self.logger.error("Error inserting paper %s: %s", paper_id, e)
 
