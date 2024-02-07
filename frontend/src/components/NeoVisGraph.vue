@@ -1,6 +1,6 @@
 <template>
     <h1 class="text-3xl text-center font-bold mb-4 mt-4">PaperWalk</h1>
-    <FilterButtons @filter-applied="applyFilter"/>
+    <FilterButtons @filter-applied="applyFilter" />
     <div class="flex">
         <!-- Graph Container -->
         <div class="flex-grow">
@@ -12,9 +12,11 @@
 </template>
 
 <script>
+import { useNodeStyles } from '../composables/useNodeStyles';
+import { useFilter } from '../composables/useFilter';
 import SideBar from './SideBar.vue';
-import NeoVis from 'neovis.js';
 import FilterButtons from './FilterButtons.vue';
+import NeoVis from 'neovis.js/dist/neovis.js';
 
 export default {
     name: 'NeoVisGraph',
@@ -28,49 +30,27 @@ export default {
             selectedEdge: null, // Holds the selected edge's information
         };
     },
+    setup() {
+        // const { selectedPaper, selectedEdge, initializeGraph } = useGraph();
+        const { randomSize, getColor, getOpacity, getTitles } = useNodeStyles();
+        const { applyFilter } = useFilter();
+
+        return {
+            // selectedPaper,
+            // selectedEdge,
+            // initializeGraph,
+            randomSize,
+            getColor,
+            getOpacity,
+            getTitles,
+            applyFilter,
+        };
+    },
     mounted() {
-        this.initializeNeoVis();
+        this.initializeGraph();
     },
     methods: {
-        randomSize(node) {
-            let size = 1;
-            if (node.properties.citationCount === undefined) {
-                size = 1;
-            }
-            else
-                size = node.properties.citationCount + 1;
-            console.log(size);
-            return node.properties.citationCount ** 2 / 2;
-        },
-        getColor(node) {
-            if (node.properties.citationCount < 10) {
-                return "blue";
-            }
-            else if (node.properties.citationCount >= 10 && node.properties.citationCount < 100) {
-                return "orange";
-            }
-            else {
-                return "red";
-            }
-        },
-        getOpacity(node) {
-            // use log scale to make the opacity more even
-            return Math.log(node.properties.citationCount + 2) / 13;
-        },
-        getTitles(node) {
-            //    return node.properties.title === undefined ? "" : node.properties.title.split(" ")[0]
-            let title = node.properties.firstAuthor === undefined ? "" : node.properties.firstAuthor.split(" ").slice(-1)[0]
-            if (node.properties.year === undefined) {
-                return title
-            }
-            title += " (" + node.properties.year + ")"
-
-            return title
-        },
-        applyFilter(minCitationCount) {
-            this.initializeNeoVis(minCitationCount);
-        },
-        initializeNeoVis(minCitationCount = 0) {
+        initializeGraph(minCitationCount = 0) {
             let initialCypher;
             // if (minCitationCount === 0) { // No filter
             //     initialCypher = 'MATCH (p1:Paper)-[r:CITES]->(p2:Paper) RETURN p1,r,p2 LIMIT 20';
@@ -173,7 +153,7 @@ export default {
                 // console.log(viz.nodes.get(e.edge.from));
             });
         }
-    }
+    },
 };
 </script>
 
