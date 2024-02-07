@@ -1,8 +1,8 @@
 import { ref } from 'vue';
-import { useGraph } from '../composables/useGraph';
+import { useGraph, selectedPaper, selectedEdge } from './useGraph';
 
 // eslint-disable-next-line no-unused-vars
-const { selectedPaper, selectedEdge, initializeGraph } = useGraph();
+const { initializeGraph } = useGraph(selectedPaper, selectedEdge);
 
 export function useFilter() {
     const minCitationCount = ref(0);

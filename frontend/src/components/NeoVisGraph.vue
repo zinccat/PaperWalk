@@ -14,7 +14,7 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useFilter } from '../composables/useFilter';
-import { useGraph } from '../composables/useGraph';
+import { useGraph, selectedPaper, selectedEdge } from '../composables/useGraph';
 import SideBar from './SideBar.vue';
 import FilterButtons from './FilterButtons.vue';
 
@@ -23,7 +23,7 @@ import FilterButtons from './FilterButtons.vue';
 const { applyFilter } = useFilter();
 
 // eslint-disable-next-line no-unused-vars
-const { initializeGraph, selectedPaper, selectedEdge } = useGraph();
+const { initializeGraph } = useGraph(selectedPaper, selectedEdge);
 
 // Lifecycle hook
 onMounted(() => {
