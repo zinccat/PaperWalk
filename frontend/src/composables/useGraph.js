@@ -80,7 +80,9 @@ export function useGraph(selectedPaper, selectedEdge) {
                                     const nodeTo = rel.end;
                                     const nodeFromCitationCount = viz.nodes.get(nodeFrom).raw.properties.citationCount;
                                     const nodeToCitationCount = viz.nodes.get(nodeTo).raw.properties.citationCount;
-                                    return Math.max(1, nodeFromCitationCount * nodeToCitationCount * 0.02);
+                                    // return Math.max(1, nodeFromCitationCount * nodeToCitationCount * 0.02);
+                                    // Use log scale to make the thickness of the edge more visually distinguishable
+                                    return Math.max(1, Math.log(nodeFromCitationCount * nodeToCitationCount) * 2);
                                 } catch (e) {
                                     console.error(e);
                                     return 1;
