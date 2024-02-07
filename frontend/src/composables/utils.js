@@ -9,8 +9,9 @@ export async function expandGraph(paperId) {
     // console.log(paperId);
   // call the backend to expand the graph
   axios.get(`http://localhost:5007/papers/expand/${paperId}`)
+    // eslint-disable-next-line no-unused-vars
     .then(response => {
-      const data = response.data
+      // const data = response.data
     //   console.log(data)
       initializeGraph();
     })
