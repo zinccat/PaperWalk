@@ -1,40 +1,26 @@
 <template>
     <h1 class="text-3xl text-center font-bold mb-4 mt-4">PaperWalk</h1>
-    <div class="flex justify-center pt-4">
-        <button @click="applyFilter(10)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
-            More than 10 Citations
-        </button>
-        <button @click="applyFilter(100)"
-            class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded mr-2">
-            More than 100 Citations
-        </button>
-        <button @click="applyFilter(1000)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2">
-            More than 1000 Citations
-        </button>
-        <button @click="applyFilter(0)" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-            Clear Filter
-        </button>
-    </div>
+    <FilterButtons @filter-applied="applyFilter"/>
     <div class="flex">
         <!-- Graph Container -->
         <div class="flex-grow">
             <div id="neoVisGraph" class="neo-vis-container"></div>
         </div>
-        <!-- Sidebar for Paper Information -->
-        <sidebar :paper="selectedPaper"></sidebar>
+        <!-- SideBar for Paper Information -->
+        <SideBar :paper="selectedPaper"></SideBar>
     </div>
 </template>
 
-
-
 <script>
-import sidebar from './SideBar.vue';
+import SideBar from './SideBar.vue';
 import NeoVis from 'neovis.js';
+import FilterButtons from './FilterButtons.vue';
 
 export default {
     name: 'NeoVisGraph',
     components: {
-        sidebar
+        SideBar,
+        FilterButtons,
     },
     data() {
         return {
