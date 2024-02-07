@@ -36,9 +36,6 @@ export default {
         const { applyFilter } = useFilter();
 
         return {
-            // selectedPaper,
-            // selectedEdge,
-            // initializeGraph,
             randomSize,
             getColor,
             getOpacity,
