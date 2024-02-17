@@ -8,7 +8,7 @@ export const { initializeGraph } = useGraph(selectedPaper, selectedEdge);
 export async function expandGraph(paperId) {
     // console.log(paperId);
   // call the backend to expand the graph
-  axios.get(`http://localhost:5007/papers/expand/${paperId}`)
+  axios.get(`papers/expand/${paperId}`)
     // eslint-disable-next-line no-unused-vars
     .then(response => {
       // const data = response.data
@@ -23,7 +23,7 @@ export async function expandGraph(paperId) {
 
 export async function clearGraph() {
   // call the backend to clear the graph
-  axios.post('http://localhost:5007/clear')
+  axios.post('clear')
     // eslint-disable-next-line no-unused-vars
     .then(response => {
       // const data = response.data

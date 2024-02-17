@@ -14,7 +14,7 @@ export function useSearchApi() {
         loading.value = true;
         error.value = null;
         try {
-            const response = await axios.get('http://localhost:5007/search', { params: { query } });
+            const response = await axios.get('search', { params: { query } });
             data.value = response.data;
             initializeGraph();
         } catch (err) {
