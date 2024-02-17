@@ -83,6 +83,22 @@ async def expand_paper(paper_id: str):
         paper_db.insert_citations_or_references_bulk(paper_id, reference, Relation.REFERENCES)
     return {"status": "success"}
 
+@app.get("/search", response_model=Union[dict, list])  # Adjust the response_model as needed
+async def search_papers(query: str):
+    """Search papers."""
+    search_results = semantic_scholar_api.search_papers(query)
+    for results in search_results:
+        res = results["data"]
+        for paper in res:
+            paper_db.insert_paper(paper["paperId"], paper)
+    return search_results
+
+@app.post("/clean", response_model=dict)
+async def clean_database():
+    """Clean the database."""
+    paper_db.clean_database()
+    return {"status": "success"}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host='0.0.0.0', port=5007)

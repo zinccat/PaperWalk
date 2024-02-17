@@ -26,7 +26,7 @@ class SemanticScholarAPI:
             logger.warning("API key is not set")
         self.timeout = 10
         self.fields = (
-            "title,authors,abstract,citationCount,referenceCount,externalIds,year"
+            "paperId,title,authors,abstract,citationCount,referenceCount,externalIds,year"
         )
         self.limit = 10
         self.max_limit = 100
@@ -92,6 +92,26 @@ class SemanticScholarAPI:
                     yield response
         else:
             url = f"https://api.semanticscholar.org/graph/v1/paper/{paper_id}/references?fields={self.fields}&limit={self.limit}"
+            yield self._request(url)
+
+    def search_papers(self, query, fetch_all=False):
+        """Search papers"""
+        if fetch_all:
+            finished = False
+            offset = 0
+            while not finished:
+                url = f"https://api.semanticscholar.org/graph/v1/paper/search?query={query}&fields={self.fields}&limit={self.max_limit}&offset={offset}"
+                response = self._request(url)
+                if response is None:
+                    offset += self.max_limit
+                    continue
+                elif len(response.get("data", [])) == 0:
+                    finished = True
+                else:
+                    offset += self.max_limit
+                    yield response
+        else:
+            url = f"https://api.semanticscholar.org/graph/v1/paper/search?query={query}&fields={self.fields}&limit={self.limit}"
             yield self._request(url)
 
 
