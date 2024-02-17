@@ -1,7 +1,7 @@
 # PaperWalk
 Random walk on the shoulders of giants
 
-![Demo](./public/demo.png)
+![Demo](./assets/demo.png)
 
 ## Installation
 ### Backend
