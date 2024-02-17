@@ -4,3 +4,5 @@ python-dotenv
 networkx
 graphdatascience
 backoff
+fastapi
+uvicorn

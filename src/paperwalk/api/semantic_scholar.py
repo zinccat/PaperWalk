@@ -1,9 +1,5 @@
-import requests
-import backoff
 from logging import (
     getLogger,
-    StreamHandler,
-    Formatter,
     DEBUG,
     INFO,
     WARNING,
@@ -11,11 +7,16 @@ from logging import (
     CRITICAL,
 )
 
+import requests
+import backoff
+
 logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 
 class SemanticScholarAPI:
+    """Semantic Scholar API wrapper"""
+
     def __init__(self, api_key=None):
         if api_key is not None:
             self.api_key = api_key
@@ -25,7 +26,7 @@ class SemanticScholarAPI:
             logger.warning("API key is not set")
         self.timeout = 10
         self.fields = (
-            "title,authors,abstract,citationCount,referenceCount,externalIds,year"
+            "paperId,title,authors,abstract,citationCount,referenceCount,externalIds,year"
         )
         self.limit = 10
         self.max_limit = 100
@@ -49,10 +50,12 @@ class SemanticScholarAPI:
             return None
 
     def fetch_paper(self, paper_id):
+        """Fetch a paper by its ID"""
         url = f"https://api.semanticscholar.org/graph/v1/paper/{paper_id}?fields={self.fields}&limit={self.limit}"
         return self._request(url)
 
     def fetch_citations(self, paper_id, fetch_all=False):
+        """Fetch citations of a paper"""
         if fetch_all:
             finished = False
             offset = 0
@@ -72,6 +75,7 @@ class SemanticScholarAPI:
             yield self._request(url)
 
     def fetch_references(self, paper_id, fetch_all=False):
+        """Fetch references of a paper"""
         if fetch_all:
             finished = False
             offset = 0
@@ -88,6 +92,26 @@ class SemanticScholarAPI:
                     yield response
         else:
             url = f"https://api.semanticscholar.org/graph/v1/paper/{paper_id}/references?fields={self.fields}&limit={self.limit}"
+            yield self._request(url)
+
+    def search_papers(self, query, fetch_all=False):
+        """Search papers"""
+        if fetch_all:
+            finished = False
+            offset = 0
+            while not finished:
+                url = f"https://api.semanticscholar.org/graph/v1/paper/search?query={query}&fields={self.fields}&limit={self.max_limit}&offset={offset}"
+                response = self._request(url)
+                if response is None:
+                    offset += self.max_limit
+                    continue
+                elif len(response.get("data", [])) == 0:
+                    finished = True
+                else:
+                    offset += self.max_limit
+                    yield response
+        else:
+            url = f"https://api.semanticscholar.org/graph/v1/paper/search?query={query}&fields={self.fields}&limit={self.limit}"
             yield self._request(url)
 
 

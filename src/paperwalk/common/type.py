@@ -1,5 +1,6 @@
 from typing import List, Optional, Tuple, Union
 from enum import Enum
+from pydantic import BaseModel
 
 
 class Relation(Enum):
@@ -7,7 +8,7 @@ class Relation(Enum):
     REFERENCES = 2
 
 
-class Paper:
+class Paper(BaseModel):
     def __init__(
         self,
         paper_id: str,
