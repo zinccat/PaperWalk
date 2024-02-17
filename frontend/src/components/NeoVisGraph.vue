@@ -50,7 +50,7 @@ onMounted(() => {
     /* Adjust based on actual button container height */
     width: 75%;
     position: absolute;
-    top: 180px;
+    top: 250px;
     /* Adjust this value as needed */
     left: 0;
 }
