@@ -93,9 +93,9 @@ async def search_papers(query: str):
             paper_db.insert_paper(paper["paperId"], paper)
     return search_results
 
-@app.post("/clean", response_model=dict)
+@app.post("/clear", response_model=dict)
 async def clean_database():
-    """Clean the database."""
+    """Clear the database."""
     paper_db.clean_database()
     return {"status": "success"}
 

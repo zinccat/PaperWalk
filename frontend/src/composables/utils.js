@@ -21,6 +21,20 @@ export async function expandGraph(paperId) {
 
 }
 
+export async function clearGraph() {
+  // call the backend to clear the graph
+  axios.post('http://localhost:5007/clear')
+    // eslint-disable-next-line no-unused-vars
+    .then(response => {
+      // const data = response.data
+    //   console.log(data)
+      initializeGraph();
+    })
+    .catch(error => {
+      console.log(error)
+    })
+}
+
 export const renderGraph = (config) => {
   const viz = new NeoVis(config);
   viz.render();
