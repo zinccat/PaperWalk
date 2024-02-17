@@ -1,0 +1,1 @@
+uvicorn scripts.backend:app --reload --host=0.0.0.0 --port=5007 --timeout-keep-alive 20
